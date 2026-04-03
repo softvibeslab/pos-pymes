@@ -619,6 +619,6 @@ export const objectHelpers = {
     }, {} as Pick<T, K>);
   },
   merge: <T extends Record<string, any>>(...objs: Partial<T>[]): T => {
-    return objs.reduce((result, obj) => ({ ...result, ...obj }), {} as T);
+    return objs.reduce((result, obj) => ({ ...result, ...obj }), {} as T) as T;
   },
 };
