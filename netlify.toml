@@ -1,0 +1,116 @@
+# ============================================
+# Configuración de Netlify para POS PyMES
+# ============================================
+
+[build]
+  # Comando de build para producción
+  command = "pnpm --filter @pos-pymes/shared build && pnpm --filter @pos-pymes/pos build"
+
+  # Directorio de publicación
+  publish = "apps/pos/.next"
+
+  # Directorio base
+  base = "/"
+
+# ============================================
+# Configuración de entornos
+# ============================================
+[dev]
+  command = "pnpm --filter @pos-pymes/pos dev"
+  port = 3000
+  targetPort = 3000
+  publish = "apps/pos"
+  autoLaunch = false
+
+# ============================================
+# Variables de entorno de producción
+# ============================================
+[production]
+  # URL de la API en producción
+  # Reemplazar con la URL real de tu API
+  environment = { NEXT_PUBLIC_API_URL = "https://tu-api-url.com/api" }
+
+[preview]
+  # URL de la API en preview
+  environment = { NEXT_PUBLIC_API_URL = "https://tu-api-staging-url.com/api" }
+
+# ============================================
+# Headers de seguridad
+# ============================================
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# ============================================
+# Headers para assets estáticos
+# ============================================
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ============================================
+# Headers para Service Worker y Manifest
+# ============================================
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# ============================================
+# Redirects para PWA
+# ============================================
+[[redirects]]
+  from = "/home"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+
+# ============================================
+# Plugins de Netlify
+# ============================================
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# ============================================
+# Configuración de funciones (si se usan)
+# ============================================
+[functions]
+  node_bundler = "esbuild"
+
+# ============================================
+# Configuración de depuración
+# ============================================
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.images]
+  compress = true
