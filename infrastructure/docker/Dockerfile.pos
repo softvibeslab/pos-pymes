@@ -1,0 +1,57 @@
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY apps/pos/package.json ./apps/pos/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build application
+FROM base AS builder
+WORKDIR /app
+RUN npm install -g pnpm
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Build shared package
+RUN pnpm --filter @pos-pymes/shared build
+
+# Build POS app
+RUN pnpm --filter @pos-pymes/pos build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 pos
+
+# Copy built files
+COPY --from=builder /app/apps/pos/.next ./.next
+COPY --from=builder /app/apps/pos/public ./public
+COPY --from=builder /app/apps/pos/package.json ./package.json
+COPY --from=builder /app/apps/pos/next.config.js ./
+
+# Copy shared package
+COPY --from=builder /app/packages/shared/dist ./node_modules/@pos-pymes/shared
+
+# Set permissions
+RUN chown -R pos:nodejs /app
+USER pos
+
+EXPOSE 3000
+
+CMD ["npm", "start"]

@@ -1,0 +1,53 @@
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY packages/api/package.json ./packages/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/db/package.json ./packages/db/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build application
+FROM base AS builder
+WORKDIR /app
+RUN npm install -g pnpm
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Build shared and db packages
+RUN pnpm --filter @pos-pymes/shared build
+RUN pnpm --filter @pos-pymes/db build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 pos
+
+# Copy built files
+COPY --from=builder /app/packages/api/dist ./dist
+COPY --from=builder /app/packages/shared/dist ./node_modules/@pos-pymes/shared
+COPY --from=builder /app/packages/db/dist ./node_modules/@pos-pymes/db
+COPY --from=builder /app/packages/api/package.json ./package.json
+
+# Set permissions
+RUN chown -R pos:nodejs /app
+USER pos
+
+EXPOSE 3001
+
+CMD ["node", "dist/index.js"]

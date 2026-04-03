@@ -1,0 +1,33 @@
+{
+  "name": "pos-pymes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema POS y Dashboard para Tiendas de Barrio",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "clean": "turbo run clean",
+    "db:generate": "cd packages/db && pnpm run generate",
+    "db:migrate": "cd packages/db && pnpm run migrate",
+    "db:push": "cd packages/db && pnpm run push",
+    "db:studio": "cd packages/db && pnpm run studio"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "prettier": "^3.1.0",
+    "turbo": "^1.11.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.14.0"
+}
